@@ -18,16 +18,38 @@ package com.example.androiddevchallenge
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.background
+import androidx.compose.material.FabPosition
+import androidx.compose.material.FloatingActionButton
+import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Scaffold
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
+import androidx.compose.material.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import androidx.core.view.WindowCompat
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.androiddevchallenge.ui.page.CountDownTimerPage
 import com.example.androiddevchallenge.ui.theme.MyTheme
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val insetsController = WindowCompat.getInsetsController(window, window.decorView)
+        window.decorView.post {
+            insetsController?.let {
+                it.isAppearanceLightNavigationBars = true
+                it.isAppearanceLightStatusBars = true
+            }
+        }
         setContent {
             MyTheme {
                 MyApp()
@@ -39,23 +61,31 @@ class MainActivity : AppCompatActivity() {
 // Start building your app here!
 @Composable
 fun MyApp() {
+    val viewModel: TimeViewModel = viewModel()
+    var floatButtonPosition by mutableStateOf(FabPosition.Center)
     Surface(color = MaterialTheme.colors.background) {
-        Text(text = "Ready... Set... GO!")
-    }
-}
-
-@Preview("Light Theme", widthDp = 360, heightDp = 640)
-@Composable
-fun LightPreview() {
-    MyTheme {
-        MyApp()
-    }
-}
-
-@Preview("Dark Theme", widthDp = 360, heightDp = 640)
-@Composable
-fun DarkPreview() {
-    MyTheme(darkTheme = true) {
-        MyApp()
+        Scaffold(topBar = {
+            TopAppBar(
+                title = { Text(text = stringResource(id = R.string.app_name)) },
+                elevation = 0.dp,
+                backgroundColor = MaterialTheme.colors.background
+            )
+        }, floatingActionButton = {
+            FloatingActionButton(onClick = {
+                floatButtonPosition=if (floatButtonPosition == FabPosition.Center){
+                    viewModel.setTime(1000)
+                    FabPosition.End
+                }else{
+                    viewModel.setTime(0)
+                    FabPosition.Center
+                }
+            }) {
+                Icon(painter = painterResource(id = R.drawable.ic_ok), contentDescription = "ok")
+            }
+        },
+            floatingActionButtonPosition = floatButtonPosition
+        ) {
+            CountDownTimerPage(viewModel)
+        }
     }
 }
