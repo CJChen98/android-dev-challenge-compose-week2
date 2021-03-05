@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.Button
 import androidx.compose.material.CircularProgressIndicator
@@ -86,7 +87,7 @@ fun CountDownTimerPage(viewModel: TimeViewModel = viewModel()) {
     ) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             if (it) {
-                SetTime(viewModel = viewModel)
+                TimePicker(viewModel = viewModel)
             } else {
                 CountDown(viewModel = viewModel)
             }
@@ -134,15 +135,6 @@ fun CountDown(viewModel: TimeViewModel) {
     }
 }
 
-@Composable
-fun SetTime(viewModel: TimeViewModel) {
-    Box(modifier = Modifier.size(400.dp)) {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            TimePicker(viewModel)
-        }
-    }
-
-}
 
 var inputType by mutableStateOf<InputType>(InputType.Auto)
 
@@ -173,7 +165,7 @@ fun TimePicker(viewModel: TimeViewModel) {
         Log.d("H1 Color", "TimePicker: ${MaterialTheme.typography.h1.color}")
         KeyBoard(
             modifier = Modifier
-                .size(90.dp)
+                .size(95.dp)
                 .clip(CircleShape),
             textStyle = MaterialTheme.typography.h2.copy(
                 fontSize = 56.sp
