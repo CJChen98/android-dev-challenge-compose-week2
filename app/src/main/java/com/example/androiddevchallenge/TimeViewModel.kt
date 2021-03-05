@@ -4,7 +4,10 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.androiddevchallenge.ui.page.Hour
 import com.example.androiddevchallenge.ui.page.InputType
+import com.example.androiddevchallenge.ui.page.Minute
+import com.example.androiddevchallenge.ui.page.Second
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -54,9 +57,13 @@ class TimeViewModel : ViewModel() {
         }
     }
 
-    fun setTime(time: Long) {
-        viewModelScope.launch(Dispatchers.Default) {
-            _timeFlow.emit(time)
+    fun setTime() {
+        val value = (_hour.value ?: 0) * Hour + (_minute.value ?: 0) * Minute + (_second.value
+            ?: 0) * Second
+        if (value >= 1000) {
+            viewModelScope.launch {
+                _timeFlow.emit(value)
+            }
         }
     }
 

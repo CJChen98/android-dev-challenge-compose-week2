@@ -72,15 +72,17 @@ fun MyApp() {
             )
         }, floatingActionButton = {
             FloatingActionButton(onClick = {
-                floatButtonPosition=if (floatButtonPosition == FabPosition.Center){
-                    viewModel.setTime(1000)
+                viewModel.setTime()
+                floatButtonPosition = if (viewModel.time.value > 0) {
                     FabPosition.End
-                }else{
-                    viewModel.setTime(0)
+                } else {
                     FabPosition.Center
                 }
             }) {
-                Icon(painter = painterResource(id = R.drawable.ic_ok), contentDescription = "ok")
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_ok),
+                    contentDescription = "ok"
+                )
             }
         },
             floatingActionButtonPosition = floatButtonPosition
