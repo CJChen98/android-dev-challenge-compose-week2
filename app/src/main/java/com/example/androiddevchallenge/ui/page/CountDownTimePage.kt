@@ -1,34 +1,32 @@
 package com.example.androiddevchallenge.ui.page
 
-import android.util.Log
+import android.annotation.SuppressLint
+import android.icu.text.SimpleDateFormat
+import android.os.Build
 import androidx.compose.animation.Crossfade
-import androidx.compose.animation.core.Easing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.Button
-import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.FloatingActionButton
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
@@ -38,22 +36,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.DrawStyle
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.androiddevchallenge.TimeViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.androiddevchallenge.R
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.withContext
+import com.example.androiddevchallenge.TimeViewModel
 
 /**
  * @Author:       Chen
@@ -76,7 +71,7 @@ sealed class InputType(val value: String) {
 @Composable
 fun CountDownTimerPage(viewModel: TimeViewModel = viewModel()) {
     val time by viewModel.time.collectAsState()
-    val showSetTime by mutableStateOf(time <= 0)
+    val showSetTime by viewModel.showFloatButton.collectAsState()
 //    Box(
 //        modifier = Modifier.fillMaxSize(),
 //        contentAlignment = Alignment.Center
@@ -99,9 +94,11 @@ fun CountDownTimerPage(viewModel: TimeViewModel = viewModel()) {
 @Composable
 fun CountDown(viewModel: TimeViewModel) {
     var start by remember { mutableStateOf(false) }
+    val currentTime by viewModel.currentTime.collectAsState()
     val animDuration by viewModel.time.collectAsState()
+    var animTemp by mutableStateOf(0f)
     val scaleAnim by animateFloatAsState(
-        targetValue = if (start) 1f else 0f,
+        targetValue = if (start) 1f else animTemp,
         animationSpec = tween(
             animDuration.toInt(),
             easing = LinearEasing
@@ -109,32 +106,69 @@ fun CountDown(viewModel: TimeViewModel) {
     )
 
     val arcColor = MaterialTheme.colors.primary
-    Box(
-        modifier = Modifier
-            .size(280.dp)
-            .drawWithContent {
-                drawCircle(
-                    color = Color.LightGray,
-                    style = Stroke(width = 8f)
-                )
-                drawArc(
-                    color = arcColor,
-                    startAngle = -90f,
-                    sweepAngle = (360f * scaleAnim),
-                    useCenter = false,
-                    style = Stroke(width = 10f)
-                )
-                drawContent()
-            }, contentAlignment = Alignment.Center
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        Box(
+            modifier = Modifier
+                .requiredWidth(320.dp).fillMaxHeight(0.8f)
+                .drawWithContent {
+                    animTemp = scaleAnim
+                    drawCircle(
+                        color = Color.LightGray,
+                        style = Stroke(width = 8f)
+                    )
+                    drawArc(
+                        color = arcColor,
+                        startAngle = -90f,
+                        sweepAngle = (360f * scaleAnim),
+                        useCenter = false,
+                        topLeft = Offset(0f, (size.height - size.width) / 2),
+                        size = Size(size.width, size.width),
+                        style = Stroke(width = 10f)
+                    )
+                    drawContent()
+                }, contentAlignment = Alignment.Center
+        ) {
 
-        Button(onClick = { start = true }) {
-            Text(text = "Start")
+            Text(text = timeFormat.format(currentTime), style = MaterialTheme.typography.h3)
 
+        }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = {
+                viewModel.resetTime()
+            }) {
+                Icon(painter = painterResource(id = R.drawable.ic_edit), contentDescription = "")
+            }
+            FloatingActionButton(onClick = {
+                start = if (!start) {
+                    viewModel.startCountDownTime()
+                    true
+                } else {
+                    viewModel.pauseCountDownTime()
+                    false
+                }
+            }) {
+                Icon(
+                    painter = painterResource(id = if (!start) R.drawable.ic_play else R.drawable.ic_pause),
+                    contentDescription = ""
+                )
+            }
+            IconButton(onClick = { /*TODO*/ }) {
+//
+            }
         }
     }
 }
 
+@SuppressLint("SimpleDateFormat")
+val timeFormat = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+    SimpleDateFormat("HH : mm : ss")
+} else {
+    java.text.SimpleDateFormat("HH : mm : ss")
+}
 
 var inputType by mutableStateOf<InputType>(InputType.Auto)
 
@@ -152,17 +186,26 @@ fun TimePicker(viewModel: TimeViewModel) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.Top
         ) {
             TimeSelectItem(num = hour ?: 0, type = InputType.Hour, textStyle = textStyle)
-            Text(text = ":", style = MaterialTheme.typography.h2)
+            Text(
+                text = ":",
+                style = MaterialTheme.typography.h2,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = 6.dp)
+            )
             TimeSelectItem(num = minute ?: 0, type = InputType.Minute, textStyle = textStyle)
-            Text(text = ":", style = MaterialTheme.typography.h2)
+            Text(
+                text = ":",
+                style = MaterialTheme.typography.h2,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = 6.dp)
+            )
             TimeSelectItem(num = second ?: 0, type = InputType.Second, textStyle = textStyle)
         }
         Spacer(modifier = Modifier.height(16.dp))
-        Log.d("H2 Color", "TimePicker: ${MaterialTheme.typography.h2.color}")
-        Log.d("H1 Color", "TimePicker: ${MaterialTheme.typography.h1.color}")
+
         KeyBoard(
             modifier = Modifier
                 .size(95.dp)

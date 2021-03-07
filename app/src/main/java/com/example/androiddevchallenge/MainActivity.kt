@@ -18,7 +18,9 @@ package com.example.androiddevchallenge
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.background
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.FabPosition
 import androidx.compose.material.FloatingActionButton
 import androidx.compose.material.Icon
@@ -28,9 +30,8 @@ import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -39,14 +40,16 @@ import androidx.core.view.WindowCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.androiddevchallenge.ui.page.CountDownTimerPage
 import com.example.androiddevchallenge.ui.theme.MyTheme
+import java.nio.file.WatchEvent
 
 class MainActivity : AppCompatActivity() {
+    @ExperimentalAnimationApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        WindowCompat.setDecorFitsSystemWindows(window,false)
         val insetsController = WindowCompat.getInsetsController(window, window.decorView)
         window.decorView.post {
             insetsController?.let {
-                it.isAppearanceLightNavigationBars = true
                 it.isAppearanceLightStatusBars = true
             }
         }
@@ -59,35 +62,37 @@ class MainActivity : AppCompatActivity() {
 }
 
 // Start building your app here!
+@ExperimentalAnimationApi
 @Composable
 fun MyApp() {
     val viewModel: TimeViewModel = viewModel()
-    var floatButtonPosition by mutableStateOf(FabPosition.Center)
+    val showFloatButton by viewModel.showFloatButton.collectAsState()
     Surface(color = MaterialTheme.colors.background) {
-        Scaffold(topBar = {
+        Scaffold(modifier = Modifier.padding(top=12.dp),topBar = {
             TopAppBar(
                 title = { Text(text = stringResource(id = R.string.app_name)) },
                 elevation = 0.dp,
                 backgroundColor = MaterialTheme.colors.background
             )
         }, floatingActionButton = {
-            FloatingActionButton(onClick = {
-                viewModel.setTime()
-                floatButtonPosition = if (viewModel.time.value > 0) {
-                    FabPosition.End
-                } else {
-                    FabPosition.Center
+
+            AnimatedVisibility(visible = showFloatButton) {
+                if (showFloatButton) {
+                    FloatingActionButton(onClick = {
+                        viewModel.setTime()
+                    },modifier = Modifier.padding(10.dp)) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_ok),
+                            contentDescription = "ok"
+                        )
+                    }
                 }
-            }) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_ok),
-                    contentDescription = "ok"
-                )
             }
-        },
-            floatingActionButtonPosition = floatButtonPosition
+        }, floatingActionButtonPosition = FabPosition.Center
         ) {
             CountDownTimerPage(viewModel)
         }
     }
+
+
 }
