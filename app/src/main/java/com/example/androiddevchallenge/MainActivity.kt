@@ -40,13 +40,12 @@ import androidx.core.view.WindowCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.androiddevchallenge.ui.page.CountDownTimerPage
 import com.example.androiddevchallenge.ui.theme.MyTheme
-import java.nio.file.WatchEvent
 
 class MainActivity : AppCompatActivity() {
     @ExperimentalAnimationApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        WindowCompat.setDecorFitsSystemWindows(window,false)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
         val insetsController = WindowCompat.getInsetsController(window, window.decorView)
         window.decorView.post {
             insetsController?.let {
@@ -68,31 +67,36 @@ fun MyApp() {
     val viewModel: TimeViewModel = viewModel()
     val showFloatButton by viewModel.showFloatButton.collectAsState()
     Surface(color = MaterialTheme.colors.background) {
-        Scaffold(modifier = Modifier.padding(top=12.dp),topBar = {
-            TopAppBar(
-                title = { Text(text = stringResource(id = R.string.app_name)) },
-                elevation = 0.dp,
-                backgroundColor = MaterialTheme.colors.background
-            )
-        }, floatingActionButton = {
+        Scaffold(
+            modifier = Modifier.padding(top = 12.dp),
+            topBar = {
+                TopAppBar(
+                    title = { Text(text = stringResource(id = R.string.app_name)) },
+                    elevation = 0.dp,
+                    backgroundColor = MaterialTheme.colors.background
+                )
+            },
+            floatingActionButton = {
 
-            AnimatedVisibility(visible = showFloatButton) {
-                if (showFloatButton) {
-                    FloatingActionButton(onClick = {
-                        viewModel.setTime()
-                    },modifier = Modifier.padding(10.dp)) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_ok),
-                            contentDescription = "ok"
-                        )
+                AnimatedVisibility(visible = showFloatButton) {
+                    if (showFloatButton) {
+                        FloatingActionButton(
+                            onClick = {
+                                viewModel.setTime()
+                            },
+                            modifier = Modifier.padding(10.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_ok),
+                                contentDescription = "ok"
+                            )
+                        }
                     }
                 }
-            }
-        }, floatingActionButtonPosition = FabPosition.Center
+            },
+            floatingActionButtonPosition = FabPosition.Center
         ) {
             CountDownTimerPage(viewModel)
         }
     }
-
-
 }

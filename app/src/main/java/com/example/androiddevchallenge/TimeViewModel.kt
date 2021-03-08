@@ -1,10 +1,24 @@
+/*
+ * Copyright 2021 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.example.androiddevchallenge
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.androiddevchallenge.ui.page.Hour
 import com.example.androiddevchallenge.ui.page.InputType
 import com.example.androiddevchallenge.ui.page.Minute
@@ -57,16 +71,16 @@ class TimeViewModel : ViewModel() {
                 _second.postValue(value)
             }
             is InputType.Auto -> {
-                when {
-
-                }
             }
         }
     }
 
     fun setTime() {
-        val value = (_hour.value ?: 0) * Hour + (_minute.value ?: 0) * Minute + (_second.value
-            ?: 0) * Second
+        pauseCountDownTime()
+        val value = (_hour.value ?: 0) * Hour + (_minute.value ?: 0) * Minute + (
+            _second.value
+                ?: 0
+            ) * Second
         viewModelScope.launch {
             if (value >= 1000) {
                 _timeFlow.emit(value)
@@ -100,7 +114,7 @@ class TimeViewModel : ViewModel() {
         }
     }
 
-    fun resetTime(){
+    fun resetTime() {
         pauseCountDownTime()
         viewModelScope.launch {
             showFloatButton.emit(true)

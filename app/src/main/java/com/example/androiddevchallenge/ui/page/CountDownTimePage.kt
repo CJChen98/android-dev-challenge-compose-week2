@@ -1,7 +1,23 @@
+/*
+ * Copyright 2021 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.example.androiddevchallenge.ui.page
 
 import android.annotation.SuppressLint
 import android.icu.text.SimpleDateFormat
+import android.icu.util.TimeZone
 import android.os.Build
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.LinearEasing
@@ -88,23 +104,20 @@ fun CountDownTimerPage(viewModel: TimeViewModel = viewModel()) {
             }
         }
     }
-//    }
 }
 
 @Composable
 fun CountDown(viewModel: TimeViewModel) {
     var start by remember { mutableStateOf(false) }
     val currentTime by viewModel.currentTime.collectAsState()
-    val animDuration by viewModel.time.collectAsState()
-    var animTemp by mutableStateOf(0f)
+    var animTemp by remember(calculation = { mutableStateOf(0f) })
     val scaleAnim by animateFloatAsState(
         targetValue = if (start) 1f else animTemp,
         animationSpec = tween(
-            animDuration.toInt(),
+            currentTime.toInt(),
             easing = LinearEasing
         )
     )
-
     val arcColor = MaterialTheme.colors.primary
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -113,9 +126,12 @@ fun CountDown(viewModel: TimeViewModel) {
     ) {
         Box(
             modifier = Modifier
-                .requiredWidth(320.dp).fillMaxHeight(0.8f)
+                .requiredWidth(320.dp)
+                .fillMaxHeight(0.8f)
                 .drawWithContent {
-                    animTemp = scaleAnim
+                    if (start) {
+                        animTemp = scaleAnim
+                    }
                     drawCircle(
                         color = Color.LightGray,
                         style = Stroke(width = 8f)
@@ -123,41 +139,51 @@ fun CountDown(viewModel: TimeViewModel) {
                     drawArc(
                         color = arcColor,
                         startAngle = -90f,
-                        sweepAngle = (360f * scaleAnim),
+                        sweepAngle = (360f * if (start) scaleAnim else animTemp),
                         useCenter = false,
                         topLeft = Offset(0f, (size.height - size.width) / 2),
                         size = Size(size.width, size.width),
                         style = Stroke(width = 10f)
                     )
                     drawContent()
-                }, contentAlignment = Alignment.Center
+                },
+            contentAlignment = Alignment.Center
         ) {
 
             Text(text = timeFormat.format(currentTime), style = MaterialTheme.typography.h3)
-
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = {
-                viewModel.resetTime()
-            }) {
+            IconButton(
+                onClick = {
+                    viewModel.resetTime()
+                }
+            ) {
                 Icon(painter = painterResource(id = R.drawable.ic_edit), contentDescription = "")
             }
-            FloatingActionButton(onClick = {
-                start = if (!start) {
-                    viewModel.startCountDownTime()
-                    true
-                } else {
-                    viewModel.pauseCountDownTime()
-                    false
+            FloatingActionButton(
+                onClick = {
+                    if (scaleAnim >= 1f) return@FloatingActionButton
+                    start = if (!start) {
+                        viewModel.startCountDownTime()
+                        true
+                    } else {
+                        viewModel.pauseCountDownTime()
+                        false
+                    }
                 }
-            }) {
+            ) {
                 Icon(
                     painter = painterResource(id = if (!start) R.drawable.ic_play else R.drawable.ic_pause),
                     contentDescription = ""
                 )
             }
-            IconButton(onClick = { /*TODO*/ }) {
-//
+            IconButton(
+                onClick = {
+                    start = false
+                    viewModel.setTime()
+                }
+            ) {
+                Icon(painter = painterResource(id = R.drawable.ic_replay), contentDescription = "")
             }
         }
     }
@@ -165,12 +191,16 @@ fun CountDown(viewModel: TimeViewModel) {
 
 @SuppressLint("SimpleDateFormat")
 val timeFormat = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-    SimpleDateFormat("HH : mm : ss")
+    SimpleDateFormat("HH : mm : ss").apply {
+        timeZone = TimeZone.getTimeZone("GMT")
+    }
 } else {
-    java.text.SimpleDateFormat("HH : mm : ss")
+    java.text.SimpleDateFormat("HH : mm : ss").apply {
+        timeZone = java.util.TimeZone.getTimeZone("GMT")
+    }
 }
 
-var inputType by mutableStateOf<InputType>(InputType.Auto)
+var inputType by mutableStateOf<InputType>(InputType.Second)
 
 @Composable
 fun TimePicker(viewModel: TimeViewModel) {
@@ -297,7 +327,6 @@ fun KeyBoard(
                 modifier = modifier,
                 textStyle = textStyle,
             )
-
         }
         Row {
             NumberButton(
@@ -318,7 +347,6 @@ fun KeyBoard(
                 modifier = modifier,
                 textStyle = textStyle,
             )
-
         }
         Row(
             horizontalArrangement = Arrangement.End,
